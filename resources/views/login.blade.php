@@ -15,7 +15,7 @@
                     @if (Auth::check())
                         <a href="{{ url('/home') }}">Home</a>
                     @else
-                        <a href="{{ url('/register') }}">Register</a>
+                        <a href="{{ url('/register_view') }}">Register</a>
                     @endif
                 </div>
             @endif

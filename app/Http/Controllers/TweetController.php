@@ -3,16 +3,21 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Auth;
 use App\Tweet;
-use App\Tweet_Comment;
+use App\User;
 use App\Tweet_like;
-
 
 
 class TweetController extends Controller
 {
+  protected $redirectTo = '/home';
 
-    //
+  public function __construct()
+  {
+      $this->middleware('auth');
+  }
+
   public function index()
   {
     $tweets = Tweet::all();
@@ -27,51 +32,50 @@ class TweetController extends Controller
     return array('tweets' => $tweets);
   }
 
+  //Create a new tweet for the current user and save it in the database then redirect to home view
   public function store(Request $request)
   {
-      $tweet = new Tweet;
-      $tweet->user_id       = $request->input('user_id');
-      $tweet->tweet_text    = $request->input('tweet_text');
-      $tweet->save();
+      if (Auth::check())
+      {
+        $tweet = new Tweet;
+        $tweet->user_id       = Auth::user()->id;
+        $tweet->tweet_text    = $request->input('tweet_text');
+        $tweet->save();
 
-      return $tweet;
+      // return $tweet;
+      return redirect('/home');
+    }
   }
 
-
-  public function destroy($tweet_id)
+  //Delete from the database one of the current users' tweets then redirect to home view
+  public function destroy(Request $request)
   {
-      $users_following = Tweet::where('tweet_id', '=', $tweet_id)
+    $user_id = Auth::user()->id;
+    $users_following = Tweet::where('tweet_id', $request->input('tweet_id'))
+                  ->where('user_id',$user_id)
                   ->delete();
+    return redirect('/home');
   }
 
-  //Tweet Comments
-  public function get_tweets_comment()
-  {
-    $tweets = Tweet::join('tweet_comments','tweets.tweet_id','=','tweet_comments.tweet_id')
-                  ->get();
-
-    return $tweets;
-  }
-  public function comment($id,Request $request)
-  {
-    $tweet_comment = new Tweet_Comment;
-    $tweet_comment->tweet_id       = $id;
-    $tweet_comment->user_id       = $request->input('user_id');
-    $tweet_comment->comment       = $request->input('comment');
-    $tweet_comment->save();
-
-    return $tweet_comment;
-  }
-
-  public function like_tweet($id,Request $request)
+  //Create a new tweet like for the current user and save it in the database
+  public function like_tweet(Request $request)
   {
     $tweet_like = new Tweet_like;
-    $tweet_like->tweet_id       = $id;
-    $tweet_like->user_id       = $request->input('user_id');
+    $tweet_like->tweet_id       = $request->input('tweet_id');
+    $tweet_like->user_id       = Auth::user()->id;
     $tweet_like->save();
 
-    return $tweet_like;
+    return redirect('/home');
   }
 
+  // view all the tweets the current user posted in the my_tweets view
+  public function my_tweets()
+  {
+    $user_id = Auth::user()->id;
+    $my_tweets = Tweet::where('user_id', '=', $user_id)
+                  ->get();
+
+    return view('my_tweets', ['my_tweets' => $my_tweets]);
+  }
 
 }
