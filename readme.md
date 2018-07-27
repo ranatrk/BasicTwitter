@@ -1,5 +1,5 @@
 To run:
-php artisan migrate 
+php artisan migrate \n
 php artisan serve
 
 Access through localhost:
